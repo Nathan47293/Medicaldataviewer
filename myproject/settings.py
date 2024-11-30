@@ -77,11 +77,11 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'medicaldataviewer',       # Replace with your actual database name
-        'USER': 'root',            # Replace with your MySQL username
-        'PASSWORD': '12345678',        # Replace with your MySQL password
-        'HOST': 'localhost',                # Or your database host
-        'PORT': '3306',                     # Default MySQL port
+        'NAME': 'medicaldataviewer',
+        'USER': 'root',
+        'PASSWORD': '12345678',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
 

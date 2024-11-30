@@ -1,8 +1,8 @@
 import pandas as pd
-from myapp.models import SafetyReport  # Replace 'myapp' with your app name
+from myapp.models import SafetyReport
 
 # Correct file path to the Excel file
-file_path = '/Users/william/Downloads/aspirinAlgo.xlsx'  # Replace this with the actual file path
+file_path = '/Users/william/Downloads/aspirinAlgo.xlsx'
 
 try:
     # Load the Excel file
