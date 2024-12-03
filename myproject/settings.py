@@ -77,7 +77,7 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'medicaldata',       # Replace with your actual database name
+        'NAME': 'medicaldatav4',       # Replace with your actual database name
         'USER': 'root',            # Replace with your MySQL username
         'PASSWORD': '123',        # Replace with your MySQL password
         'HOST': 'localhost',                # Or your database host
