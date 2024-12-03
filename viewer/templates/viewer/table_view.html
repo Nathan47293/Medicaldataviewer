@@ -1,0 +1,43 @@
+{% load custom_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Table Viewer</title>
+</head>
+<body>
+    <h1>Select a Table to View</h1>
+    <form method="get" action="">
+        <label for="table">Choose a table:</label>
+        <select name="table" id="table" onchange="this.form.submit()">
+            <option value="Product" {% if selected_table == 'Product' %}selected{% endif %}>Product</option>
+            <option value="Person" {% if selected_table == 'Person' %}selected{% endif %}>Person</option>
+            <option value="Injection" {% if selected_table == 'Injection' %}selected{% endif %}>Injection</option>
+        </select>        
+    </form>
+
+    <h2>Data from {{ selected_table }}</h2>
+    {% if data %}
+        <table border="1">
+            <thead>
+                <tr>
+                    {% for field_name in field_names %}
+                        <th>{{ field_name }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in data %}
+                    <tr>
+                        {% for field_name in field_names %}
+                            <td>{{ record|attr:field_name }}</td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No data available for this table.</p>
+    {% endif %}
+</body>
+</html>
