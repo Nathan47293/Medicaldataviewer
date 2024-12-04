@@ -1,0 +1,163 @@
+{% load static %}
+{% load custom_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Injection Statistics</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="#">Medical Data Viewer</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'table_view' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'person_stats' %}">Person Statistics</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'product_stats' %}">Product Statistics</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="{% url 'injection_stats' %}">Injection Statistics</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1>Injection Statistics</h1>
+
+        <!-- Filters Form -->
+        <form method="get" action="{% url 'injection_stats' %}">
+            <!-- ID Filter -->
+            <div class="form-group">
+                <label for="id">ID:</label>
+                <input type="number" name="id" id="id" value="{{ filters.id }}" class="form-control">
+            </div>
+            <!-- Drug Filter -->
+            <div class="form-group">
+                <label for="drug">Drug:</label>
+                <select name="drug" id="drug" class="form-control">
+                    <option value="">--All--</option>
+                    {% for key, value in Injection.DRUG_CHOICES %}
+                        <option value="{{ key }}" {% if filters.drug == key|stringformat:"s" %}selected{% endif %}>{{ value }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Injection Type Filter -->
+            <div class="form-group">
+                <label for="injection">Injection Type:</label>
+                <input type="text" name="injection" id="injection" value="{{ filters.injection }}" class="form-control">
+            </div>
+
+            <!-- Buttons -->
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="window.location.href='?table={{ selected_table }}'">
+                    Reset
+                </button>
+            </div>
+        </form>
+
+        <!-- Charts -->
+        <div class="mt-5">
+            <!-- Drug Usage Frequency Bar Chart -->
+            <h2>Drug Usage Frequency</h2>
+            <canvas id="drugChart"></canvas>
+        </div>
+
+        <div class="mt-5">
+            <!-- Injection Type Distribution Pie Chart -->
+            <h2>Injection Type Distribution</h2>
+            <canvas id="injectionTypeChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Pass JSON data to JavaScript using custom json_script -->
+    {% json_script drug_labels "drug-labels" %}
+    {% json_script drug_counts "drug-counts" %}
+    {% json_script injection_type_labels "injection-type-labels" %}
+    {% json_script injection_type_counts "injection-type-counts" %}
+
+    <!-- Chart.js Scripts -->
+    <script>
+        // Drug Usage Frequency Bar Chart
+        var drugLabels = JSON.parse(document.getElementById('drug-labels').textContent);
+        var drugCounts = JSON.parse(document.getElementById('drug-counts').textContent);
+
+        var drugCtx = document.getElementById('drugChart').getContext('2d');
+        var drugChart = new Chart(drugCtx, {
+            type: 'bar',
+            data: {
+                labels: drugLabels,
+                datasets: [{
+                    label: 'Number of Uses',
+                    data: drugCounts,
+                    backgroundColor: 'rgba(255, 206, 86, 0.6)'
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Drug'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Count'
+                        },
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Injection Type Distribution Pie Chart
+        var injectionTypeLabels = JSON.parse(document.getElementById('injection-type-labels').textContent);
+        var injectionTypeCounts = JSON.parse(document.getElementById('injection-type-counts').textContent);
+
+        var injectionTypeCtx = document.getElementById('injectionTypeChart').getContext('2d');
+        var injectionTypeChart = new Chart(injectionTypeCtx, {
+            type: 'pie',
+            data: {
+                labels: injectionTypeLabels,
+                datasets: [{
+                    data: injectionTypeCounts,
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(153, 102, 255, 0.6)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+    </script>
+        <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+
+</body>
+</html>
