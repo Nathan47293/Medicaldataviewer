@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.db.models import Count
+from collections import Counter
 from .models import Product, Person, Injection
+from django.utils.safestring import mark_safe
 import json
 
 # Main Table View Function
@@ -131,11 +133,13 @@ def table_view(request):
         'selected_table': selected_table,
         'filters': filters,
         'Person': Person,
-        'Injection': Injection,
+        'Injection': Injection,  # Make sure Injection is in the context
         'person_display_fields': person_display_fields,
     }
 
     return render(request, 'viewer/table_view.html', context)
+
+
 
 # Person Stats View Function
 def person_stats(request):
@@ -208,64 +212,85 @@ def person_stats(request):
 
 # Product Stats View Function
 def product_stats(request):
-    filters = {
-        'id': request.GET.get('id', ''),
-        'product': request.GET.get('product', ''),
-    }
-
-    # Query the Product model based on filters
+    # Query all products to get counts for the chart
     products = Product.objects.all()
-    if filters['id']:
-        products = products.filter(id=filters['id'])
-    if filters['product']:
-        products = products.filter(product__icontains=filters['product'])
 
     # Prepare data for charts
     product_usage = products.values('product').annotate(count=Count('product')).order_by('-count')
-    product_labels = [entry['product'] for entry in product_usage]
-    product_counts = [entry['count'] for entry in product_usage]
+    
+    # Group products with count <= 1 into "Other"
+    product_labels = []
+    product_counts = []
+    other_count = 0
 
+    for entry in product_usage:
+        if entry['count'] > 1:
+            product_labels.append(entry['product'])
+            product_counts.append(entry['count'])
+        else:
+            other_count += entry['count']
+
+    if other_count > 0:
+        product_labels.append('Other')
+        product_counts.append(other_count)
+
+    # Debug print statements (for checking purposes)
+    print("Product Labels:", product_labels)
+    print("Product Counts:", product_counts)
+
+    # Mark JSON as safe to prevent Django from escaping it
     context = {
-        'filters': filters,
-        'selected_table': 'Product',
-        'product_labels': product_labels,
-        'product_counts': product_counts,
+        'product_labels': mark_safe(json.dumps(product_labels)),
+        'product_counts': mark_safe(json.dumps(product_counts)),
     }
 
     return render(request, 'viewer/product_stats.html', context)
 
 # Injection Stats View Function
 def injection_stats(request):
+    # Collect filters from request
     filters = {
         'id': request.GET.get('id', ''),
         'drug': request.GET.get('drug', ''),
         'injection': request.GET.get('injection', ''),
     }
 
+    # Query the database
     injections = Injection.objects.all()
     if filters['id']:
         injections = injections.filter(id=filters['id'])
     if filters['drug']:
         injections = injections.filter(drug=filters['drug'])
     if filters['injection']:
-        injections = injections.filter(injection__icontains=filters['injection'])
+        injections = injections.filter(injection=filters['injection'])
 
+    # Collect data for charts
+
+    # Drug Usage
     drug_usage = injections.values('drug').annotate(count=Count('drug')).order_by('-count')
-    DRUG_CHOICES_DICT = dict(Injection.DRUG_CHOICES)
-    drug_labels = [DRUG_CHOICES_DICT.get(entry['drug'], 'Unknown') for entry in drug_usage]
+    drug_labels = [entry['drug'] if entry['drug'] else 'Unknown' for entry in drug_usage]
     drug_counts = [entry['count'] for entry in drug_usage]
 
-    injection_type_distribution = injections.values('injection').annotate(count=Count('injection')).order_by('-count')
-    injection_type_labels = [entry['injection'] for entry in injection_type_distribution]
-    injection_type_counts = [entry['count'] for entry in injection_type_distribution]
+    # Injection Details
+    injection_details = injections.values('injection').annotate(count=Count('injection')).order_by('-count')
+    injection_labels = [entry['injection'] if entry['injection'] else 'Unknown' for entry in injection_details]
+    injection_counts = [entry['count'] for entry in injection_details]
 
+    # Update context keys to reflect the correct data
     context = {
         'filters': filters,
         'selected_table': 'Injection',
-        'drug_labels': drug_labels,
-        'drug_counts': drug_counts,
-        'injection_type_labels': injection_type_labels,
-        'injection_type_counts': injection_type_counts,
+        'drug_labels': json.dumps(drug_labels),
+        'drug_counts': json.dumps(drug_counts),
+        'injection_labels': json.dumps(injection_labels),
+        'injection_counts': json.dumps(injection_counts),
     }
 
     return render(request, 'viewer/injection_stats.html', context)
+
+
+
+
+
+
+

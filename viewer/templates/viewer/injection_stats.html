@@ -13,7 +13,7 @@
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">Medical Data Viewer</a>
+        <a class="navbar-brand" href="{% url 'table_view' %}">Medical Data Viewer</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -39,125 +39,102 @@
     <div class="container mt-4">
         <h1>Injection Statistics</h1>
 
-        <!-- Filters Form -->
-        <form method="get" action="{% url 'injection_stats' %}">
-            <!-- ID Filter -->
-            <div class="form-group">
-                <label for="id">ID:</label>
-                <input type="number" name="id" id="id" value="{{ filters.id }}" class="form-control">
-            </div>
-            <!-- Drug Filter -->
-            <div class="form-group">
-                <label for="drug">Drug:</label>
-                <select name="drug" id="drug" class="form-control">
-                    <option value="">--All--</option>
-                    {% for key, value in Injection.DRUG_CHOICES %}
-                        <option value="{{ key }}" {% if filters.drug == key|stringformat:"s" %}selected{% endif %}>{{ value }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <!-- Injection Type Filter -->
-            <div class="form-group">
-                <label for="injection">Injection Type:</label>
-                <input type="text" name="injection" id="injection" value="{{ filters.injection }}" class="form-control">
-            </div>
-
-            <!-- Buttons -->
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-filter"></i> Filter
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="window.location.href='?table={{ selected_table }}'">
-                    Reset
-                </button>
-            </div>
-        </form>
-
-        <!-- Charts -->
+        <!-- Chart for Injection Classification Distribution -->
         <div class="mt-5">
-            <!-- Drug Usage Frequency Bar Chart -->
-            <h2>Drug Usage Frequency</h2>
+            <h2>Injection Classification Distribution</h2>
             <canvas id="drugChart"></canvas>
         </div>
 
+        <!-- Chart for Injection Details Distribution -->
         <div class="mt-5">
-            <!-- Injection Type Distribution Pie Chart -->
-            <h2>Injection Type Distribution</h2>
-            <canvas id="injectionTypeChart"></canvas>
+            <h2>Injection Details Distribution</h2>
+            <canvas id="injectionChart"></canvas>
         </div>
     </div>
 
-    <!-- Pass JSON data to JavaScript using custom json_script -->
-    {% json_script drug_labels "drug-labels" %}
-    {% json_script drug_counts "drug-counts" %}
-    {% json_script injection_type_labels "injection-type-labels" %}
-    {% json_script injection_type_counts "injection-type-counts" %}
-
-    <!-- Chart.js Scripts -->
     <script>
-        // Drug Usage Frequency Bar Chart
-        var drugLabels = JSON.parse(document.getElementById('drug-labels').textContent);
-        var drugCounts = JSON.parse(document.getElementById('drug-counts').textContent);
+        // Passing JSON data from Django to JavaScript, using escapejs to properly escape content
+        var drugLabels = JSON.parse("{{ drug_labels|escapejs }}");
+        var drugCounts = JSON.parse("{{ drug_counts|escapejs }}");
+        var injectionLabels = JSON.parse("{{ injection_labels|escapejs }}");
+        var injectionCounts = JSON.parse("{{ injection_counts|escapejs }}");
 
+        // Update label descriptions for the pie chart
+        var labelMapping = {
+            "1": "Routine Injection",
+            "2": "Emergency One-Time Injection",
+            "3": "Non-Emergency One-Time Injection"
+        };
+        
+        // Map drugLabels to more descriptive names
+        var correctedDrugLabels = drugLabels.map(label => labelMapping[label] || label);
+    
+        // Injection Classification Pie Chart
         var drugCtx = document.getElementById('drugChart').getContext('2d');
         var drugChart = new Chart(drugCtx, {
-            type: 'bar',
+            type: 'pie',
             data: {
-                labels: drugLabels,
+                labels: correctedDrugLabels,
                 datasets: [{
-                    label: 'Number of Uses',
                     data: drugCounts,
-                    backgroundColor: 'rgba(255, 206, 86, 0.6)'
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)'
+                    ]
                 }]
             },
             options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                },
+            }
+        });
+    
+        // Injection Details Bar Chart
+        var injectionCtx = document.getElementById('injectionChart').getContext('2d');
+        var injectionChart = new Chart(injectionCtx, {
+            type: 'bar',
+            data: {
+                labels: injectionLabels,
+                datasets: [{
+                    label: 'Number of Injections',
+                    data: injectionCounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                },
                 scales: {
                     x: {
                         title: {
                             display: true,
-                            text: 'Drug'
+                            text: 'Injection Details'
                         }
                     },
                     y: {
                         title: {
                             display: true,
-                            text: 'Count'
+                            text: 'Number of Injections'
                         },
-                        ticks: {
-                            beginAtZero: true
-                        }
+                        beginAtZero: true
                     }
                 }
             }
         });
-
-        // Injection Type Distribution Pie Chart
-        var injectionTypeLabels = JSON.parse(document.getElementById('injection-type-labels').textContent);
-        var injectionTypeCounts = JSON.parse(document.getElementById('injection-type-counts').textContent);
-
-        var injectionTypeCtx = document.getElementById('injectionTypeChart').getContext('2d');
-        var injectionTypeChart = new Chart(injectionTypeCtx, {
-            type: 'pie',
-            data: {
-                labels: injectionTypeLabels,
-                datasets: [{
-                    data: injectionTypeCounts,
-                    backgroundColor: [
-                        'rgba(75, 192, 192, 0.6)',
-                        'rgba(255, 99, 132, 0.6)',
-                        'rgba(153, 102, 255, 0.6)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true
-            }
-        });
     </script>
-        <!-- Bootstrap JS and dependencies -->
+
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
-
 </body>
 </html>

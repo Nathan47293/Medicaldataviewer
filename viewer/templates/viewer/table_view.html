@@ -121,14 +121,14 @@
                     </select>
                 </div>
 
-            {% elif selected_table == 'Injection' %}
-                <!-- Injection Filters -->
+                {% elif selected_table == 'Injection' %}
+               <!-- Injection Filters -->
                 <div class="form-group">
                     <label for="id">ID:</label>
                     <input type="number" name="id" id="id" value="{{ filters.id }}" class="form-control">
                 </div>
                 <div class="form-group">
-                    <label for="drug">Drug:</label>
+                    <label for="drug">Injection Classification:</label>
                     <select name="drug" id="drug" class="form-control">
                         <option value="">--All--</option>
                         {% for key, value in Injection.DRUG_CHOICES %}
@@ -137,9 +137,13 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="injection">Injection Type:</label>
+                    <label for="injection">Injection Details:</label>
                     <input type="text" name="injection" id="injection" value="{{ filters.injection }}" class="form-control">
                 </div>
+
+
+
+            
             {% endif %}
 
             <!-- Buttons -->
@@ -159,7 +163,15 @@
                 <thead class="thead-dark">
                     <tr>
                         {% for field_name in field_names %}
-                            <th>{{ field_name|capfirst }}</th>
+                            <th>
+                                {% if selected_table == 'Injection' and field_name == 'drug' %}
+                                    Injection Classification
+                                {% elif selected_table == 'Injection' and field_name == 'injection' %}
+                                    Injection Details
+                                {% else %}
+                                    {{ field_name|capfirst }}
+                                {% endif %}
+                            </th>
                         {% endfor %}
                     </tr>
                 </thead>

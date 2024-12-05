@@ -37,16 +37,30 @@ class Person(models.Model):
         managed = False
         db_table = 'Person'
 
+from django.db import models
+
 class Injection(models.Model):
     DRUG_CHOICES = [
-        (1, 'Drug A'),
-        (2, 'Drug B'),
+        (1, 'One-Time High-Risk Injection (Emergency)'),
+        (2, 'Routine Injections (Multiple)'),
+        (3, 'One-Time Injection (Non-Emergency)'),
+    ]
+
+    INJECTION_TYPE_CHOICES = [
+        (1, 'INJECTION, SOLUTION'),
+        (2, 'Capsule'),
+        (3, 'Dry Powder'),
+        (4, 'Solution for injection in pre-filled pen'),
+        (5, 'Solution for injection in pre-filled syringe'),
     ]
 
     id = models.IntegerField(primary_key=True)
-    drug = models.IntegerField(choices=DRUG_CHOICES, null=True, blank=True)
-    injection = models.CharField(max_length=255, null=True, blank=True)
+    drug = models.IntegerField(choices=DRUG_CHOICES, null=True, blank=True)  # The second column for injection type
+    injection = models.IntegerField(choices=INJECTION_TYPE_CHOICES, null=True, blank=True)  # Third column for description
 
     class Meta:
         managed = False
         db_table = 'Injection'
+
+
+

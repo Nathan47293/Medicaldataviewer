@@ -13,7 +13,7 @@
 <body>
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <a class="navbar-brand" href="#">Medical Data Viewer</a>
+        <a class="navbar-brand" href="{% url 'table_view' %}">Medical Data Viewer</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" 
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -39,133 +39,54 @@
     <div class="container mt-4">
         <h1>Product Statistics</h1>
 
-        <!-- Filters Form -->
-        <form method="get" action="{% url 'product_stats' %}">
-            <!-- ID Filter -->
-            <div class="form-group">
-                <label for="id">ID:</label>
-                <input type="number" name="id" id="id" value="{{ filters.id }}" class="form-control">
-            </div>
-            <!-- Product Name Filter -->
-            <div class="form-group">
-                <label for="product">Product Name:</label>
-                <input type="text" name="product" id="product" value="{{ filters.product }}" class="form-control">
-            </div>
-
-            <!-- Buttons -->
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-filter"></i> Filter
-                </button>
-                <button type="button" class="btn btn-secondary" onclick="window.location.href='?table={{ selected_table }}'">
-                    Reset
-                </button>
-            </div>
-        </form>
-
-        <!-- Charts -->
+        <!-- Chart for Product Usage Frequency -->
         <div class="mt-5">
-            <!-- Product Popularity Bar Chart -->
-            <h2>Product Popularity</h2>
+            <h2>Product Usage</h2>
             <canvas id="productChart"></canvas>
         </div>
-
-        <!-- Sales Over Time Line Chart (Optional) -->
-        <!-- Uncomment and implement if you have 'sales_date' and 'sales_amount' fields -->
-        <!--
-        <div class="mt-5">
-            <h2>Sales Over Time</h2>
-            <canvas id="salesChart"></canvas>
-        </div>
-        -->
     </div>
-
-    <!-- Pass JSON data to JavaScript using custom json_script -->
-    {% json_script product_labels "product-labels" %}
-    {% json_script product_counts "product-counts" %}
-    <!-- {% json_script sales_labels "sales-labels" %}
-    {% json_script sales_totals "sales-totals" %} -->
 
     <!-- Chart.js Scripts -->
     <script>
-        // Product Popularity Bar Chart
-        var productLabels = JSON.parse(document.getElementById('product-labels').textContent);
-        var productCounts = JSON.parse(document.getElementById('product-counts').textContent);
+        // Product Usage Pie Chart
+
+        // Use the JSON data passed from the view, encoded as safe strings
+        var productLabels = JSON.parse('{{ product_labels|escapejs }}');
+        var productCounts = JSON.parse('{{ product_counts|escapejs }}');
+
+        // Debugging logs to check if data is being read properly
+        console.log("Product Labels:", productLabels);
+        console.log("Product Counts:", productCounts);
 
         var productCtx = document.getElementById('productChart').getContext('2d');
         var productChart = new Chart(productCtx, {
-            type: 'bar',
+            type: 'pie',
             data: {
                 labels: productLabels,
                 datasets: [{
-                    label: 'Number of Products',
                     data: productCounts,
-                    backgroundColor: 'rgba(255, 159, 64, 0.6)'
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.6)',
+                        'rgba(54, 162, 235, 0.6)',
+                        'rgba(255, 206, 86, 0.6)',
+                        'rgba(75, 192, 192, 0.6)',
+                        'rgba(153, 102, 255, 0.6)',
+                        'rgba(255, 159, 64, 0.6)',
+                        'rgba(201, 203, 207, 0.6)',
+                        // Add more colors if needed
+                    ]
                 }]
             },
             options: {
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Product'
-                        }
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
                     },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Count'
-                        },
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }
-                }
+                },
             }
         });
-
-        // Sales Over Time Line Chart (Optional)
-        /*
-        var salesLabels = JSON.parse(document.getElementById('sales-labels').textContent);
-        var salesTotals = JSON.parse(document.getElementById('sales-totals').textContent);
-
-        var salesCtx = document.getElementById('salesChart').getContext('2d');
-        var salesChart = new Chart(salesCtx, {
-            type: 'line',
-            data: {
-                labels: salesLabels,
-                datasets: [{
-                    label: 'Total Sales',
-                    data: salesTotals,
-                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                    borderColor: 'rgba(75, 192, 192, 1)',
-                    fill: false
-                }]
-            },
-            options: {
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Sales Date'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Sales Amount'
-                        },
-                        ticks: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            }
-        });
-        */
     </script>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
 </body>
 </html>
